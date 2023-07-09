@@ -1,0 +1,114 @@
+#include <LiquidCrystal.h>
+
+// Define the pin numbers for the infrared sensors
+const int ir1Pin = 2;
+const int ir2Pin = 3;
+const int ir3Pin = 4;
+const int ir4Pin = 5;
+const int ir5Pin = 6;
+const int ir6Pin = 7;
+
+// Define the pin numbers for the GY-31 Color Sensor
+#define S0 50
+#define S1 51
+#define S2 52
+#define S3 53
+#define sensorOut 8
+
+// Define the pin numbers for the L298N module
+const int enablePin = 9;
+const int in1Pin = 10;
+const int in2Pin = 11;
+
+// Define the pin numbers for the LCD screen
+const int rsPin = 12;
+const int enPin = 13;
+const int d4Pin = A0;
+const int d5Pin = A1;
+const int d6Pin = A2;
+const int d7Pin = A3;
+
+// Define the LCD screen object
+LiquidCrystal lcd(rsPin, enPin, d4Pin, d5Pin, d6Pin, d7Pin);
+
+// Define variables to track the state
+bool objectDetected = false;
+bool colorDetected = false;
+
+void setup() {
+  // Initialize the pins for the infrared sensors
+  pinMode(ir1Pin, INPUT);
+  pinMode(ir2Pin, INPUT);
+  pinMode(ir3Pin, INPUT);
+  pinMode(ir4Pin, INPUT);
+  pinMode(ir5Pin, INPUT);
+  pinMode(ir6Pin, INPUT);
+
+  // Initialize the pin for the GY-31 Color Sensor
+  pinMode(sensorOut, INPUT);
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+
+  // Initialize the pins for the L298N module
+  pinMode(enablePin, OUTPUT);
+  pinMode(in1Pin, OUTPUT);
+  pinMode(in2Pin, OUTPUT);
+
+  // Initialize the LCD screen
+  lcd.begin(16, 2);
+  lcd.print("System Ready");
+}
+
+void loop() {
+  if (!objectDetected && (digitalRead(ir1Pin) || digitalRead(ir2Pin) || digitalRead(ir3Pin))) {
+    objectDetected = true;
+    lcd.clear();
+    lcd.print("Object detected");
+    // Turn on the L298N module
+    lcd.clear();
+    lcd.print("L298N ON");
+    digitalWrite(enablePin, HIGH);
+    digitalWrite(in1Pin, HIGH);
+    digitalWrite(in2Pin, LOW);
+  }
+
+  // Check if the GY-31 Color Sensor detects the object
+  if (!colorDetected && objectDetected && digitalRead(sensorOut)) {
+    colorDetected = true;
+    lcd.clear();
+    lcd.print("Color detected");
+    // Turn off the L298N module
+    lcd.clear();
+    lcd.print("L298N OFF");
+    digitalWrite(enablePin, LOW);
+    digitalWrite(in1Pin, LOW);
+    digitalWrite(in2Pin, LOW);
+  }
+
+  // Check if the L298N module should be turned on or off
+  if (objectDetected && colorDetected) {
+    // Turn on the L298N module after 10 seconds
+    if (millis() > 10000) {
+      lcd.clear();
+      lcd.print("L298N ON");
+      digitalWrite(enablePin, HIGH);
+      digitalWrite(in1Pin, HIGH);
+      digitalWrite(in2Pin, LOW);
+    }
+
+    // Check if any of the infrared sensors detect the object again
+    if (digitalRead(ir4Pin) || digitalRead(ir5Pin) || digitalRead(ir6Pin)) {
+      lcd.clear();
+      lcd.print("Object detected");
+    } else {
+      // Turn off the L298N module if none of the infrared sensors detect the object
+      lcd.clear();
+      lcd.print("L298N OFF");
+      digitalWrite(enablePin, LOW);
+      digitalWrite(in1Pin, LOW);
+      digitalWrite(in2Pin, LOW);
+    }
+  }
+}
