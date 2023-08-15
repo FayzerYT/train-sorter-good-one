@@ -124,22 +124,79 @@ void sortTrainByColor(int color) {
 }
 
 void loop() {
-  // Check if a train is detected at each station
-  if (!isTrainAtStation1 && digitalRead(ir1)) {
-    isTrainAtStation1 = true;
-    moveTrainToStation(4); // Move to station 4 for Blue (you need to implement this function)
-  }
-  if (!isTrainAtStation2 && digitalRead(ir2)) {
-    isTrainAtStation2 = true;
-    sortTrainByColor(/* Color code for station 5 */); // Sort the train based on color (you need to implement this function)
-  }
-  if (!isTrainAtStation3 && digitalRead(ir3)) {
-    isTrainAtStation3 = true;
-    sortTrainByColor(/* Color code for station 6 */); // Sort the train based on color (you need to implement this function)
+  if (!objectDetected && (digitalRead(ir1Pin) || digitalRead(ir2Pin) || digitalRead(ir3Pin))) {
+    objectDetected = true;
+    lcd.clear();
+    lcd.print("Object detected");
+    
+    // A DC motor will be coded in this section to move a platform to St1, 2 or 3 for the train to move onto
+    // This code involved 3 LDR's and an LED, and it stops when shone on the correct LDR. NEED HELP
+    
+    // Turn on the L298N module
+    lcd.clear();
+    lcd.print("L298N ON");
+    digitalWrite(enablePin, HIGH);
+    digitalWrite(in1Pin, HIGH);
+    digitalWrite(in2Pin, LOW);
   }
 
-  // Check if all trains have been sorted
-  if (isTrainAtStation4 && isTrainAtStation5 && isTrainAtStation6) {
-    // All trains sorted, end the program or perform any required actions
+    // ENTERS THE PLATFORM (STOPS AFTER 3 SECONDS)
+    delay(3000);
+    // Turn off the L298N module
+    lcd.clear();
+    lcd.print("L298N OFF");
+    digitalWrite(enablePin, LOW);
+    digitalWrite(in1Pin, LOW);
+    digitalWrite(in2Pin, LOW);
+
+    // Motor goes back to original position
+
+    // LEAVES THE PLATFORM (L298N turns on)
+    lcd.clear();
+    lcd.print("L298N ON");
+    digitalWrite(enablePin, HIGH);
+    digitalWrite(in1Pin, HGIH);
+    digitalWrite(in2Pin, LOW);
+
+  // Check if the GY-31 Color Sensor detects the object
+  if (!colorDetected && objectDetected && digitalRead(sensorOut)) {
+    colorDetected = true;
+    lcd.clear();
+    lcd.print("Color detected");
+    // Turn off the L298N module
+    lcd.clear();
+    lcd.print("L298N OFF");
+    digitalWrite(enablePin, LOW);
+    digitalWrite(in1Pin, LOW);
+    digitalWrite(in2Pin, LOW);
+  }
+  // THE COLOR SENSOR IS ON A TURNTABLE PLATFORM
+  // BEFORE THE L298N TURNS ON AGAIN, THE TURNTABLE NEEDS TO BE ROTATED (USING STEPPER MOTOR) TO LDR 4, 5,6 depending on color
+  // ONCE IT REACHES THE LDR PROCESS CONTINUES
+
+  // Check if the L298N module should be turned on or off
+  if (objectDetected && colorDetected) {
+    // Turn on the L298N module after 10 seconds
+    if (millis() > 10000) {
+      lcd.clear();
+      lcd.print("L298N ON");
+      digitalWrite(enablePin, HIGH);
+      digitalWrite(in1Pin, HIGH);
+      digitalWrite(in2Pin, LOW);
+    }
+
+    // Check if any of the infrared sensors detect the object again
+    if (digitalRead(ir4Pin) || digitalRead(ir5Pin) || digitalRead(ir6Pin)) {
+      lcd.clear();
+      lcd.print("Object detected");
+    } else {
+      // Turn off the L298N module if none of the infrared sensors detect the object
+      lcd.clear();
+      lcd.print("L298N OFF");
+      digitalWrite(enablePin, LOW);
+      digitalWrite(in1Pin, LOW);
+      digitalWrite(in2Pin, LOW);
+    }
+// This repeats until all trains from St1, 2 and 3 are moved to 4, 5, 6
   }
 }
