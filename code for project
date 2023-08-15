@@ -1,114 +1,145 @@
+#include <Servo.h>
+#include <AccelStepper.h>
 #include <LiquidCrystal.h>
 
-// Define the pin numbers for the infrared sensors
-const int ir1Pin = 2;
-const int ir2Pin = 3;
-const int ir3Pin = 4;
-const int ir4Pin = 5;
-const int ir5Pin = 6;
-const int ir6Pin = 7;
+// Define pins for infrared sensors
+const int ir1 = 7;
+const int ir2 = 8;
+const int ir3 = 9;
+const int ir4 = 10;
+const int ir5 = 11;
+const int ir6 = 12;
 
-// Define the pin numbers for the GY-31 Color Sensor
-#define S0 50
-#define S1 51
-#define S2 52
-#define S3 53
-#define sensorOut 8
+#define S0 6     // definitions for the Colour sensors module
+#define S1 5
+#define S2 4
+#define S3 3
+#define sensorOut 2
 
-// Define the pin numbers for the L298N module
-const int enablePin = 9;
-const int in1Pin = 10;
-const int in2Pin = 11;
+#include <Servo.h>   // Servo setup
+int servoPin1 = 17;
+int servoPos1 = 90;  // sets position to 90 degrees
+int servoPin2 = 18;
+int servoPos2 = 90;  // sets position to 90 degrees
+Servo myServo1;
+Servo myServo2;
 
-// Define the pin numbers for the LCD screen
-const int rsPin = 12;
-const int enPin = 13;
-const int d4Pin = A0;
-const int d5Pin = A1;
-const int d6Pin = A2;
-const int d7Pin = A3;
+// Define pins for L298N motor control
+const int enablePin = 29;
+const int in1Pin = 30;
+const int in2Pin = 31;
 
-// Define the LCD screen object
-LiquidCrystal lcd(rsPin, enPin, d4Pin, d5Pin, d6Pin, d7Pin);
+#define FULLSTEP 4
+#define HALFSTEP 8
 
-// Define variables to track the state
-bool objectDetected = false;
-bool colorDetected = false;
+// Creates two instances
+// Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
+AccelStepper stepper1(HALFSTEP, 8, 10, 9, 11); // redefine numbers after
+AccelStepper stepper2(FULLSTEP, 4, 6, 5, 7);
+
+                 // LCD Display Setup
+LiquidCrystal lcd(23, 24, 25, 26, 27, 28);
+
+const int buttonPin1 = 30;
+const int buttonPin2 = 31;
+const int buttonPin3 = 32;
+
+int buttonState1 = 0;
+int buttonState2 = 0;
+int buttonState3 = 0;
+
+int red = 0;                                                    // inputs havent been defined. may be a problem
+int blue = 0;
+int green = 0;
+
+int LDRInput=A0; //Set Analog Input A0 for LDR.  // Blue1
+int LDRInput1=A1;                                // Red1
+int LDRInput2=A2;                                // Green1
+int LDRInput3=A3;                                // Blue2
+int LDRInput4=A4;                                // Red2
+int LDRInput5=A5;                                // Green2
+
+int LED=33;                              // change numbers  LED for TT        //might be a problem, inputs havent been defined
+int LED2=34;                              // LED for Track Divider
+
+bool isTrainAtStation1 = false;
+bool isTrainAtStation2 = false;
+bool isTrainAtStation3 = false;
 
 void setup() {
-  // Initialize the pins for the infrared sensors
-  pinMode(ir1Pin, INPUT);
-  pinMode(ir2Pin, INPUT);
-  pinMode(ir3Pin, INPUT);
-  pinMode(ir4Pin, INPUT);
-  pinMode(ir5Pin, INPUT);
-  pinMode(ir6Pin, INPUT);
-
-  // Initialize the pin for the GY-31 Color Sensor
-  pinMode(sensorOut, INPUT);
-  pinMode(S0, OUTPUT);
-  pinMode(S1, OUTPUT);
-  pinMode(S2, OUTPUT);
-  pinMode(S3, OUTPUT);
-
-  // Initialize the pins for the L298N module
-  pinMode(enablePin, OUTPUT);
+  Serial.begin(9600);
+  
+  pinMode(enablePin, OUTPUT);       // sets L298N Pins
   pinMode(in1Pin, OUTPUT);
   pinMode(in2Pin, OUTPUT);
 
-  // Initialize the LCD screen
-  lcd.begin(16, 2);
-  lcd.print("System Ready");
+  pinMode(S0, OUTPUT);        // sets all Colour sensor pins
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
+  
+  // Setting frequency-scaling to 20%
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
+  lcd.begin(16, 2);      // LCD screen sets
+
+  myServo1.attach(servoPin1);
+  myServo2.attach(servoPin2);
+
+  pinMode(ir1, INPUT);
+  pinMode(ir2, INPUT);
+  pinMode(ir3, INPUT);
+  pinMode(ir4, INPUT);
+  pinMode(ir5, INPUT);
+  pinMode(ir6, INPUT);
+
+  pinMode(buttonPin1, INPUT);
+  pinMode(buttonPin2, INPUT);
+  pinMode(buttonPin3, INPUT);
+
+  // defines pins numbers
+  int trigPin = 9;         // might need const
+  int echoPin = 10;        // ditto
+  // defines variables
+  long duration;
+  int distance;
+}
+
+void moveTrainToStation(int targetStation) {
+  // Code to move the train to the specified station (1, 2, or 3)
+  // Adjust stepper motor settings as needed
+  // Update the relevant isTrainAtStationX variable when the train reaches the target station
+  if (!objectDetected1 && digitalRead(ir1)) { // Remove the semicolon here
+    objectDetected1 = true;
+    lcd.clear();
+    lcd.print("Train Detected in Station 1");
+  
+}
+
+void sortTrainByColor(int color) {
+  // Code to sort the train based on color (e.g., move to station 4 for Blue)
+  // Update the relevant isTrainAtStationX variable after sorting
 }
 
 void loop() {
-  if (!objectDetected && (digitalRead(ir1Pin) || digitalRead(ir2Pin) || digitalRead(ir3Pin))) {
-    objectDetected = true;
-    lcd.clear();
-    lcd.print("Object detected");
-    // Turn on the L298N module
-    lcd.clear();
-    lcd.print("L298N ON");
-    digitalWrite(enablePin, HIGH);
-    digitalWrite(in1Pin, HIGH);
-    digitalWrite(in2Pin, LOW);
+  // Check if a train is detected at each station
+  if (!isTrainAtStation1 && digitalRead(ir1)) {
+    isTrainAtStation1 = true;
+    moveTrainToStation(4); // Move to station 4 for Blue (you need to implement this function)
+  }
+  if (!isTrainAtStation2 && digitalRead(ir2)) {
+    isTrainAtStation2 = true;
+    sortTrainByColor(/* Color code for station 5 */); // Sort the train based on color (you need to implement this function)
+  }
+  if (!isTrainAtStation3 && digitalRead(ir3)) {
+    isTrainAtStation3 = true;
+    sortTrainByColor(/* Color code for station 6 */); // Sort the train based on color (you need to implement this function)
   }
 
-  // Check if the GY-31 Color Sensor detects the object
-  if (!colorDetected && objectDetected && digitalRead(sensorOut)) {
-    colorDetected = true;
-    lcd.clear();
-    lcd.print("Color detected");
-    // Turn off the L298N module
-    lcd.clear();
-    lcd.print("L298N OFF");
-    digitalWrite(enablePin, LOW);
-    digitalWrite(in1Pin, LOW);
-    digitalWrite(in2Pin, LOW);
-  }
-
-  // Check if the L298N module should be turned on or off
-  if (objectDetected && colorDetected) {
-    // Turn on the L298N module after 10 seconds
-    if (millis() > 10000) {
-      lcd.clear();
-      lcd.print("L298N ON");
-      digitalWrite(enablePin, HIGH);
-      digitalWrite(in1Pin, HIGH);
-      digitalWrite(in2Pin, LOW);
-    }
-
-    // Check if any of the infrared sensors detect the object again
-    if (digitalRead(ir4Pin) || digitalRead(ir5Pin) || digitalRead(ir6Pin)) {
-      lcd.clear();
-      lcd.print("Object detected");
-    } else {
-      // Turn off the L298N module if none of the infrared sensors detect the object
-      lcd.clear();
-      lcd.print("L298N OFF");
-      digitalWrite(enablePin, LOW);
-      digitalWrite(in1Pin, LOW);
-      digitalWrite(in2Pin, LOW);
-    }
+  // Check if all trains have been sorted
+  if (isTrainAtStation4 && isTrainAtStation5 && isTrainAtStation6) {
+    // All trains sorted, end the program or perform any required actions
   }
 }
